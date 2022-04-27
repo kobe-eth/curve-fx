@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.10;
 
-import {ICurveExchange} from "src/interfaces/ICurveExchange.sol";
-import {ERC20, SafeTransferLib} from "solfege/utils/SafeTransferLib.sol";
+import {CurveExchange} from "src/interfaces/CurveInterfaces.sol";
+import {ERC20, SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {ISynthereumLiquidityPool, IDerivative} from "src/interfaces/Interfaces.sol";
 
 contract JarvisPoolRouter {
@@ -17,7 +17,7 @@ contract JarvisPoolRouter {
         address destDerivative;
     }
 
-    ICurveExchange public constant curve = ICurveExchange(0x04aAB3e45Aa6De7783D67FCfB21Bccf2401Ca31D);
+    CurveExchange public constant curve = CurveExchange(0x04aAB3e45Aa6De7783D67FCfB21Bccf2401Ca31D);
 
     function exchange(
         address from,

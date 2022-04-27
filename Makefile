@@ -17,8 +17,9 @@ myth:
 
 # Forge
 tf:; 		forge test 
-t:; 		forge test -vvv --fork-url $(eth_rpc) --gas-report
+t:; 		forge test -vvv --fork-url $(eth_rpc) --match-contract "JarvisPoolRouterV2Test"
 
 # Brownie Related
 compile:; brownie compile
+test:; brownie test --network polygon-fork -s
 deploy:;  make clean && brownie run scripts/deploy.py --network polytend

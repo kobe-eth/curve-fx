@@ -3,10 +3,14 @@ pragma solidity 0.8.10;
 
 interface ISynthereumLiquidityPool {
     struct MintParams {
+        // Derivative to use
+        address derivative;
         // Minimum amount of synthetic tokens that a user wants to mint using collateral (anti-slippage)
         uint256 minNumTokens;
         // Amount of collateral that a user wants to spend for minting
         uint256 collateralAmount;
+        // Maximum amount of fees in percentage that user is willing to pay
+        uint256 feePercentage;
         // Expiration time of the transaction
         uint256 expiration;
         // Address to which send synthetic tokens minted
@@ -14,10 +18,14 @@ interface ISynthereumLiquidityPool {
     }
 
     struct RedeemParams {
+        // Derivative to use
+        address derivative;
         // Amount of synthetic tokens that user wants to use for redeeming
         uint256 numTokens;
         // Minimium amount of collateral that user wants to redeem (anti-slippage)
         uint256 minCollateral;
+        // Maximum amount of fees in percentage that user is willing to pay
+        uint256 feePercentage;
         // Expiration time of the transaction
         uint256 expiration;
         // Address to which send collateral tokens redeemed
@@ -51,7 +59,7 @@ interface ISynthereumLiquidityPool {
      * @return syntheticTokensMinted Amount of synthetic tokens minted by a user
      * @return feePaid Amount of collateral paid by the user as fee
      */
-    function mint(MintParams calldata mintParams) external returns (uint256 syntheticTokensMinted, uint256 feePaid);
+    function mint(MintParams memory mintParams) external returns (uint256 syntheticTokensMinted, uint256 feePaid);
 
     /**
      * @notice Redeem amount of collateral using fixed number of synthetic token
@@ -61,7 +69,7 @@ interface ISynthereumLiquidityPool {
      * @return collateralRedeemed Amount of collateral redeem by user
      * @return feePaid Amount of collateral paid by user as fee
      */
-    function redeem(RedeemParams calldata redeemParams) external returns (uint256 collateralRedeemed, uint256 feePaid);
+    function redeem(RedeemParams memory redeemParams) external returns (uint256 collateralRedeemed, uint256 feePaid);
 
     function syntheticToken() external view returns (address);
 
@@ -86,7 +94,7 @@ interface ISynthereumLiquidityPool {
      * @return destNumTokensMinted Amount of collateral redeem by user
      * @return feePaid Amount of collateral paid by user as fee
      */
-    function exchange(ExchangeParams calldata exchangeParams)
+    function exchange(ExchangeParams memory exchangeParams)
         external
         returns (uint256 destNumTokensMinted, uint256 feePaid);
 }

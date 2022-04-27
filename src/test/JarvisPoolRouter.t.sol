@@ -2,24 +2,33 @@
 pragma solidity 0.8.10;
 
 import "forge-std/Vm.sol";
-import "forge-std/stdlib.sol";
+import "forge-std/Test.sol";
 
-import {DSTestPlus} from "solfege/test/utils/DSTestPlus.sol";
-import {MockERC20} from "solfege/test/utils/mocks/MockERC20.sol";
-import {ERC20, SafeTransferLib} from "solfege/utils/SafeTransferLib.sol";
+import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
+import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
+import {ERC20, SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
 import {UtilsTest} from "src/test/Utils.sol";
 import {JarvisPoolRouter, ISynthereumLiquidityPool} from "src/JarvisPoolRouter.sol";
 
-contract JarvisPoolRouterTest is UtilsTest, stdCheats {
+contract JarvisPoolRouterTest is UtilsTest {
     using SafeTransferLib for ERC20;
 
+    // MAI Metapool
+
+    address public constant zap = 0x5ab5C56B9db92Ba45a0B46a207286cD83C15C939;
+    address public constant meta = 0x447646e84498552e62eCF097Cc305eaBFFF09308;
+
     // Stablecoins
+
+    address public constant MAI = 0xa3Fa99A148fA48D14Ed51d610c367C61876997F1;
+    address public constant USDC = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
     address public constant EURS = 0xE111178A87A3BFf0c8d18DECBa5798827539Ae99;
     address public constant PAR = 0xE2Aa7db6dA1dAE97C5f5C6914d285fBfCC32A128;
     address public constant CADC = 0x5d146d8B1dACb1EBBA5cb005ae1059DA8a1FbF57;
     address public constant XSGD = 0x769434dcA303597C8fc4997Bf3DAB233e961Eda2;
     address public constant EURT = 0x7BDF330f423Ea880FF95fC41A280fD5eCFD3D09f;
+    address public constant DAI = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
 
     // jToken + Pool + Derivative
     // =========
@@ -36,8 +45,6 @@ contract JarvisPoolRouterTest is UtilsTest, stdCheats {
     address public constant derivativeSGD = 0xb6C683B89228455B15cF1b2491cC22b529cdf2c4;
     // =========
 
-    Vm public constant vm = Vm(HEVM_ADDRESS);
-
     JarvisPoolRouter router;
 
     function setUp() public {
@@ -45,7 +52,7 @@ contract JarvisPoolRouterTest is UtilsTest, stdCheats {
     }
 
     function testExchange_SwapStableTojTokenSamePool() public {
-        tip(jEUR, address(this), 1e18);
+        deal(jEUR, address(this), 1e18);
 
         JarvisPoolRouter.ExchangeParams memory params = JarvisPoolRouter.ExchangeParams(
             address(0),
@@ -201,7 +208,7 @@ contract JarvisPoolRouterTest is UtilsTest, stdCheats {
         uint256 amountIn,
         JarvisPoolRouter.ExchangeParams memory params
     ) private returns (uint256 received) {
-        tip(tokenIn, address(this), amountIn);
+        deal(tokenIn, address(this), amountIn);
         // Swap
         ERC20(tokenIn).safeApprove(address(router), amountIn);
 

@@ -1,8 +1,20 @@
 live:
-  - name: Polygon Tenderly
+  - name: Polygon RPC
     networks:
       - name: Mainnet
         chainid: 137
-        id: polytend
-        host: https://rpc.tenderly.co/fork/5dcac15f-43c1-486f-b000-97b84e74fcbc
+        id: polygon
+        host:  https://speedy-nodes-nyc.moralis.io/cede2bf2868b0e93070abef2/polygon/mainnet/archive
         explorer: https://api.polygonscan.com/api
+
+development:
+- name: Polygon Fork
+  id: polygon-fork
+  cmd: ganache-cli
+  host: http://127.0.0.1
+  timeout: 120
+  cmd_settings:
+    port: 8545
+    gas_limit: 20000000
+    accounts: 10
+    fork: polygon
