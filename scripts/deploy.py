@@ -4,4 +4,4 @@ from brownie import interface
 
 
 def main():
-    router = deploy("JarvisPoolRouter", [])
+    router = deploy("CurveFxRouter", [])

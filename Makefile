@@ -12,8 +12,8 @@ clean:; rm -rf build/
 l:;		yarn lint && forge build
 
 myth:
-	forge flatten src/JarvisPoolRouter.sol > flat/JarvisPoolRouter.sol
-	docker run -v $(shell pwd):/tmp mythril/myth analyze /tmp/flat/JarvisPoolRouter.sol
+	forge flatten src/CurveFxRouter.sol > flat/CurveFxRouter.sol
+	docker run -v $(shell pwd):/tmp mythril/myth analyze /tmp/flat/CurveFxRouter.sol
 
 # Forge
 tf:; 		forge test 
