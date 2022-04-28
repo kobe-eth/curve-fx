@@ -312,7 +312,6 @@ contract CurveFxRouter {
     /// --- UTILS
     ///////////////////////////////////////////////////////////////
 
-    /// @notice Approve if needed
     function allow(ERC20 token, address recipient) private {
         if (recipient == address(0)) return;
         if (token.allowance(address(this), address(recipient)) == 0) {

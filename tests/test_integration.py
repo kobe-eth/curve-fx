@@ -36,7 +36,7 @@ def test_integration(a, symbol, address, pool, derivative, whale):
         tokenIn = interface.ERC20(address)
         tokenOut = interface.ERC20(token["address"])
         amountIn = 10 ** tokenIn.decimals()
-        if symbol == "jJPY":
+        if symbol == "jJPY" or symbol == "JPY":
             amountIn = 100 * 10 ** tokenIn.decimals()
 
         fill_wallet_with_underlying(tokenIn, alice, amountIn, whale)
