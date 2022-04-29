@@ -2,12 +2,14 @@
 pragma solidity 0.8.10;
 
 import {ERC20, SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
 import {ISynthereumLiquidityPool, IDerivative} from "src/interfaces/Interfaces.sol";
 import {CurveExchange, CurvePool, Registry, LendingPool} from "src/interfaces/CurveInterfaces.sol";
 
 /// @title CurveFxRouter
 contract CurveFxRouter {
+    using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
     ////////////////////////////////////////////////////////////////
@@ -43,8 +45,10 @@ contract CurveFxRouter {
         address from,
         address to,
         uint256 amountIn,
+        uint256 slippageTolerence,
         ExchangeParams calldata params
     ) external returns (uint256 received) {
+        require(slippageTolerence <= 1e18, "SLIPPAGE_TO0_HIGH");
         // Transfer from caller
         ERC20(from).safeTransferFrom(msg.sender, address(this), amountIn);
 
@@ -52,13 +56,13 @@ contract CurveFxRouter {
         address intermediary = IDerivative(params.derivative).tokenCurrency();
 
         if (from == intermediary) {
-            received = handleJarvisTokenSwap(from, to, amountIn, params);
+            received = handleJarvisTokenSwap(from, to, amountIn, slippageTolerence, params);
         } else if (from == COLLATERAL) {
-            received = handleCollateralSwap(to, amountIn, params);
+            received = handleCollateralSwap(to, amountIn, slippageTolerence, params);
         } else if (isInMetapool) {
-            received = handleMetapoolSwap(from, to, amountIn, params);
+            received = handleMetapoolSwap(from, to, amountIn, slippageTolerence, params);
         } else {
-            received = handleJarvisPoolSwap(from, to, amountIn, params);
+            received = handleJarvisPoolSwap(from, to, amountIn, slippageTolerence, params);
         }
 
         require(received > 0, "SWAP_FAILED");
@@ -73,6 +77,7 @@ contract CurveFxRouter {
         address from,
         address to,
         uint256 amountIn,
+        uint256 slippageTolerence,
         ExchangeParams calldata params
     ) internal returns (uint256 received) {
         bool isInMetapool = isMeta(to);
@@ -82,17 +87,17 @@ contract CurveFxRouter {
             received = redeemCollateral(from, params.derivative, amountIn);
         } else if (isInMetapool) {
             received = redeemCollateral(from, params.derivative, amountIn);
-            received = exchangeToUnderlying(COLLATERAL, to, received, address(this));
+            received = exchangeToUnderlying(COLLATERAL, to, received, slippageTolerence, address(this));
         } else if (to == dest) {
             received = redeemAndMint(params, amountIn);
         } else {
             (address pool, uint256 minDy) = CURVE.get_best_rate(from, to, amountIn);
             if (pool != address(0)) {
-                received = exchangeCoins(pool, from, to, amountIn, minDy, address(this));
+                received = exchangeCoins(pool, from, to, amountIn, minDy, slippageTolerence, address(this));
             } else {
                 received = redeemAndMint(params, amountIn);
                 (pool, minDy) = CURVE.get_best_rate(dest, to, received);
-                received = exchangeCoins(pool, dest, to, received, minDy, address(this));
+                received = exchangeCoins(pool, dest, to, received, minDy, slippageTolerence, address(this));
             }
         }
     }
@@ -100,19 +105,20 @@ contract CurveFxRouter {
     function handleCollateralSwap(
         address to,
         uint256 amountIn,
+        uint256 slippageTolerence,
         ExchangeParams calldata params
     ) internal returns (uint256 received) {
         bool isInMetapool = isMeta(to);
         address dest = IDerivative(params.destDerivative).tokenCurrency();
 
         if (isInMetapool) {
-            received = exchangeToUnderlying(COLLATERAL, to, amountIn, address(this));
+            received = exchangeToUnderlying(COLLATERAL, to, amountIn, slippageTolerence, address(this));
         } else if (to == dest) {
             received = mintFromCollateral(params, amountIn);
         } else {
             received = mintFromCollateral(params, amountIn);
             (address pool, uint256 minDy) = CURVE.get_best_rate(dest, to, received);
-            received = exchangeCoins(pool, dest, to, received, minDy, address(this));
+            received = exchangeCoins(pool, dest, to, received, minDy, slippageTolerence, address(this));
         }
     }
 
@@ -120,21 +126,22 @@ contract CurveFxRouter {
         address from,
         address to,
         uint256 amountIn,
+        uint256 slippageTolerence,
         ExchangeParams calldata params
     ) internal returns (uint256 received) {
         bool isInMetapool = isMeta(to);
         address dest = IDerivative(params.destDerivative).tokenCurrency();
 
         if (to == dest) {
-            received = exchangeToUnderlying(from, COLLATERAL, amountIn, address(this));
+            received = exchangeToUnderlying(from, COLLATERAL, amountIn, slippageTolerence, address(this));
             received = mintFromCollateral(params, received);
         } else if (isInMetapool) {
-            received = exchangeToUnderlying(from, to, amountIn, address(this));
+            received = exchangeToUnderlying(from, to, amountIn, slippageTolerence, address(this));
         } else {
-            received = exchangeToUnderlying(from, COLLATERAL, amountIn, address(this));
+            received = exchangeToUnderlying(from, COLLATERAL, amountIn, slippageTolerence, address(this));
             received = mintFromCollateral(params, received);
             (address pool, uint256 minDy) = CURVE.get_best_rate(dest, to, received);
-            received = exchangeCoins(pool, dest, to, received, minDy, address(this));
+            received = exchangeCoins(pool, dest, to, received, minDy, slippageTolerence, address(this));
         }
     }
 
@@ -142,6 +149,7 @@ contract CurveFxRouter {
         address from,
         address to,
         uint256 amountIn,
+        uint256 slippageTolerence,
         ExchangeParams calldata params
     ) internal returns (uint256 received) {
         bool isInMetapool = isMeta(to);
@@ -151,25 +159,25 @@ contract CurveFxRouter {
         (address pool, uint256 minDy) = CURVE.get_best_rate(from, to, amountIn);
 
         if (pool != address(0)) {
-            received = exchangeCoins(pool, from, to, amountIn, minDy, address(this));
+            received = exchangeCoins(pool, from, to, amountIn, minDy, slippageTolerence, address(this));
         } else if (to == COLLATERAL || isInMetapool) {
             (pool, minDy) = CURVE.get_best_rate(from, intermediary, amountIn);
-            received = exchangeCoins(pool, from, intermediary, amountIn, minDy, address(this));
+            received = exchangeCoins(pool, from, intermediary, amountIn, minDy, slippageTolerence, address(this));
             received = redeemCollateral(intermediary, params.derivative, received);
 
             if (isInMetapool && to != COLLATERAL) {
-                received = exchangeToUnderlying(COLLATERAL, to, received, address(this));
+                received = exchangeToUnderlying(COLLATERAL, to, received, slippageTolerence, address(this));
             }
         } else if (to == dest) {
             (pool, minDy) = CURVE.get_best_rate(from, intermediary, amountIn);
-            received = exchangeCoins(pool, from, intermediary, amountIn, minDy, address(this));
+            received = exchangeCoins(pool, from, intermediary, amountIn, minDy, slippageTolerence, address(this));
             received = redeemAndMint(params, received);
         } else {
             (pool, minDy) = CURVE.get_best_rate(from, intermediary, amountIn);
-            received = exchangeCoins(pool, from, intermediary, amountIn, minDy, address(this));
+            received = exchangeCoins(pool, from, intermediary, amountIn, minDy, slippageTolerence, address(this));
             received = redeemAndMint(params, received);
             (pool, minDy) = CURVE.get_best_rate(dest, to, received);
-            received = exchangeCoins(pool, dest, to, received, minDy, address(this));
+            received = exchangeCoins(pool, dest, to, received, minDy, slippageTolerence, address(this));
         }
     }
 
@@ -195,11 +203,13 @@ contract CurveFxRouter {
         address from,
         address to,
         uint256 amountIn,
+        uint256 slippageTolerence,
         address receiver
     ) internal returns (uint256 received) {
         (int128 _from, int128 _to, uint256 dy) = getExchangeAmount(from, to, amountIn);
         allow(ERC20(from), address(ZAP));
-        received = ZAP.exchange_underlying(METAPOOL, _from, _to, amountIn, 0, receiver);
+        dy = dy.mulWadDown(1e18 - slippageTolerence);
+        received = ZAP.exchange_underlying(METAPOOL, _from, _to, amountIn, dy, receiver);
     }
 
     function exchangeCoins(
@@ -208,9 +218,11 @@ contract CurveFxRouter {
         address to,
         uint256 amountIn,
         uint256 minDy,
+        uint256 slippageTolerence,
         address receiver
     ) internal returns (uint256 received) {
         allow(ERC20(from), address(CURVE));
+        minDy = minDy.mulWadDown(1e18 - slippageTolerence);
         received = CURVE.exchange(pool, from, to, amountIn, 0, receiver);
     }
 

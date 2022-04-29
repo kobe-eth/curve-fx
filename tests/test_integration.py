@@ -2,6 +2,7 @@ import json, pytest
 from scripts.utils import tx_param, DEPLOYER
 from brownie import interface, chain, CurveFxRouter, accounts
 
+
 def get_tokens():
     with open("tests/tokens.json") as json_file:
         tokens = json.load(json_file)
@@ -47,6 +48,7 @@ def test_integration(a, symbol, address, pool, derivative, whale):
             tokenIn,
             tokenOut,
             amountIn,
+            0.002e18,
             args,
             tx_param(alice),
         )

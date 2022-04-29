@@ -22,4 +22,4 @@ t:; 		forge test -vvv --fork-url $(eth_rpc) --match-contract "JarvisPoolRouterV2
 # Brownie Related
 compile:; brownie compile
 test:; brownie test --network polygon-fork -s
-deploy:;  make clean && brownie run scripts/deploy.py --network polytend
+deploy:;  make clean && brownie run scripts/deploy.py --network polygon-tenderly
