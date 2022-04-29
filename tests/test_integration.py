@@ -53,7 +53,12 @@ def test_integration(a, symbol, address, pool, derivative, whale):
             tx_param(alice),
         )
 
+        # No dust
+        assert tokenIn.balanceOf(router) == 0
+        assert tokenOut.balanceOf(router) == 0
+
         # TODO:  assert Exchange Rates
+
         print(
             "Received",
             (tokenOut.balanceOf(alice) - before) / 10 ** tokenOut.decimals(),
