@@ -8,6 +8,7 @@ import {ISynthereumLiquidityPool, IDerivative} from "src/interfaces/Interfaces.s
 import {CurveExchange, CurvePool, Registry, LendingPool} from "src/interfaces/CurveInterfaces.sol";
 
 /// @title CurveFxRouter
+/// Version 0.0.1
 contract CurveFxRouter {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
@@ -16,6 +17,7 @@ contract CurveFxRouter {
     /// ---  STRUCTS
     ///////////////////////////////////////////////////////////////
 
+    /// @notice Synthereum Liquidity Pools parameters
     struct ExchangeParams {
         // Derivative of source pool
         address derivative;
@@ -41,6 +43,12 @@ contract CurveFxRouter {
     /// @notice V2 Market
     LendingPool public constant AAVE_LENDING_POOL = LendingPool(0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf);
 
+    /// @notice Exchange tokens using Jarvis Liquidity pool on Curve and/or jSynth
+    /// @param from Token the caller want to exchange.
+    /// @param to Token desired.
+    /// @param amountIn fromToken amount to exchange.
+    /// @param slippageTolerence Slippage tolerated. 1e18 = 100%.
+    /// @param params Params related to jSyng Liquidity pools used to mint/redeemAndMint jSynth tokens.
     function exchange(
         address from,
         address to,
@@ -52,7 +60,10 @@ contract CurveFxRouter {
         // Transfer from caller
         ERC20(from).safeTransferFrom(msg.sender, address(this), amountIn);
 
+        // First check to look if fromToken is in MAI+3Pool3CRV-f
         bool isInMetapool = isMeta(from);
+
+        // Look for intermediary jSynth if needed.
         address intermediary = IDerivative(params.derivative).tokenCurrency();
 
         if (from == intermediary) {
@@ -73,6 +84,7 @@ contract CurveFxRouter {
     /// --- SWAP HELPERS
     ///////////////////////////////////////////////////////////////
 
+    /// @notice Handle Exchange in case from token is jSynth.
     function handleJarvisTokenSwap(
         address from,
         address to,
@@ -102,6 +114,7 @@ contract CurveFxRouter {
         }
     }
 
+    /// @notice Handle Exchange in case from token is jSynth collateral = USDC.
     function handleCollateralSwap(
         address to,
         uint256 amountIn,
@@ -122,6 +135,7 @@ contract CurveFxRouter {
         }
     }
 
+    /// @notice Handle Exchange in case from token is in MAI+3Pool3CRV-f.
     function handleMetapoolSwap(
         address from,
         address to,
@@ -145,6 +159,7 @@ contract CurveFxRouter {
         }
     }
 
+    /// @notice Handle Exchange in case from token is in Jarvis Curve Pools.
     function handleJarvisPoolSwap(
         address from,
         address to,
