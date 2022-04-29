@@ -5,7 +5,7 @@ import {ERC20, SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
 import {ISynthereumLiquidityPool, IDerivative} from "src/interfaces/Interfaces.sol";
-import {CurveExchange, CurvePool, Registry, LendingPool} from "src/interfaces/CurveInterfaces.sol";
+import {CurveExchange, CurvePoolHelper, Registry, LendingPool} from "src/interfaces/CurveInterfaces.sol";
 
 /// @title CurveFxRouter
 /// Version 0.0.1
@@ -36,10 +36,10 @@ contract CurveFxRouter {
     /// @notice Collateral
     address public constant COLLATERAL = address(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174);
 
-    /// @notice Zap Contract Aave Metapools
-    CurvePool public constant ZAP = CurvePool(0x5ab5C56B9db92Ba45a0B46a207286cD83C15C939);
     /// @notice Exchange Contract (id=2 Address Provider)
     CurveExchange public constant CURVE = CurveExchange(0x04aAB3e45Aa6De7783D67FCfB21Bccf2401Ca31D);
+    /// @notice Zap Contract Aave Metapools
+    CurvePoolHelper public constant ZAP = CurvePoolHelper(0x5ab5C56B9db92Ba45a0B46a207286cD83C15C939);
     /// @notice V2 Market
     LendingPool public constant AAVE_LENDING_POOL = LendingPool(0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf);
 
@@ -262,7 +262,7 @@ contract CurveFxRouter {
         to = getUnderlying(to);
 
         (int128 _from, int128 _to, ) = Registry(_registry).get_coin_indices(METAPOOL, from, to);
-        dy = CurvePool(METAPOOL).get_dy_underlying(_from, _to, amount);
+        dy = CurvePoolHelper(METAPOOL).get_dy_underlying(_from, _to, amount);
 
         return (_from, _to, dy);
     }

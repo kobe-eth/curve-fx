@@ -101,7 +101,7 @@ interface LendingPool {
     function UNDERLYING_ASSET_ADDRESS() external view returns (address);
 }
 
-interface CurvePool {
+interface CurvePoolHelper {
     function exchange(
         int128 i,
         int128 j,
